@@ -1,518 +1,572 @@
+<!-- =============================
+ Beaux Sucres — Logiciel Web Complet (PWA, Offline, Undo/Redo, Export PNG)
+ Fichiers : index.html · styles.css · app.js · sw.js · manifest.webmanifest
+============================= -->
+
+===================== index.html =====================
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Beaux Sucres · Tier List ZEVENT</title>
-  <meta name="description" content="Site vitrine + tier list interactive pour les Beaux Sucres — spécial ZEVENT" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%8D%AC%3C/text%3E%3C/svg%3E" />
-  <style>
-    :root {
-      --bg: #0f0f14;
-      --bg-2: #12121a;
-      --glass: rgba(255,255,255,0.06);
-      --txt: #f4f6fa;
-      --muted: #a7acb7;
-      --brand: #8b5cf6; /* violet */
-      --brand-2: #22d3ee; /* cyan */
-      --good: #10b981;
-      --warn: #f59e0b;
-      --danger: #ef4444;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius: 18px;
-    }
-    html,body{height:100%}
-    *{box-sizing:border-box}
-    body {
-      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      background: radial-gradient(1200px 800px at 80% -10%, rgba(139,92,246,.25), transparent 60%),
-                  radial-gradient(1200px 800px at 0% 100%, rgba(34,211,238,.18), transparent 60%),
-                  linear-gradient(180deg, var(--bg), var(--bg-2));
-      color: var(--txt);
-      letter-spacing:.2px;
-    }
-    header {
-      position: sticky; top:0; z-index: 10;
-      backdrop-filter: saturate(140%) blur(8px);
-      background: linear-gradient(180deg, rgba(15,15,20,.85), rgba(15,15,20,.35));
-      border-bottom: 1px solid rgba(255,255,255,.06);
-    }
-    .nav {
-      max-width: 1200px; margin:0 auto; display:flex; align-items:center; gap:16px; padding:14px 18px;
-    }
-    .logo {
-      display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.4px;
-    }
-    .logo .mark { font-size: 24px; filter: drop-shadow(0 4px 10px rgba(139,92,246,.4)); }
-    .logo .brand { font-size: 18px; }
-    .nav .spacer { flex:1; }
-    .btn { cursor:pointer; border:none; border-radius: 12px; padding:10px 14px; color:var(--txt); background: var(--glass); backdrop-filter: blur(6px);
-           border: 1px solid rgba(255,255,255,.08); box-shadow: var(--shadow); transition: .2s transform ease, .2s background ease, .2s border-color ease, .2s box-shadow ease; }
-    .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,.09); }
-    .btn.primary { background: linear-gradient(135deg, var(--brand), var(--brand-2)); border-color: transparent; }
-    .btn.ghost { background: transparent; border-color: rgba(255,255,255,.12); }
-    .btn.small { padding:8px 10px; border-radius: 10px; font-size: 13px; }
-
-    .hero { max-width: 1200px; margin: 26px auto 8px; display:grid; grid-template-columns: 1.3fr 1fr; gap:22px; padding:0 18px; }
-    .card { background: var(--glass); border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius); box-shadow: var(--shadow); }
-    .hero .left { padding:26px; position:relative; overflow:hidden; }
-    .hero h1 { margin:0 0 6px; font-size: 40px; line-height:1.05; }
-    .hero p { margin:0; color: var(--muted); }
-    .hero .pulse {
-      position:absolute; inset:-2px; border-radius: inherit; pointer-events:none;
-      background: radial-gradient(600px 240px at 20% 0%, rgba(139,92,246,.15), transparent),
-                  radial-gradient(600px 240px at 100% 100%, rgba(34,211,238,.14), transparent);
-      mask: linear-gradient(#000 40%, transparent);
-    }
-    .hero .right { padding:20px; display:grid; gap:12px; align-content:start; }
-    .bar { display:flex; gap:10px; flex-wrap:wrap; }
-    .bar .tag { padding:8px 10px; border-radius:999px; background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); font-size:13px; }
-
-    .controls { max-width: 1200px; margin: 6px auto 20px; padding: 0 18px; display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
-    .control-card { padding:16px; display:grid; gap:12px; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .row input[type="text"], .row input[type="url"] { flex:1; min-width: 120px; padding: 10px 12px; border-radius: 12px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color:var(--txt); }
-    .row label { font-size: 13px; color: var(--muted); }
-
-    .tierboard { max-width: 1200px; margin: 0 auto; padding: 0 18px 22px; display:grid; gap:10px; }
-    .tier-row { display:grid; grid-template-columns: 72px 1fr; gap:10px; align-items:stretch; }
-    .badge { display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; border-radius: 14px; letter-spacing:.8px; background: linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.04)); border:1px solid rgba(255,255,255,.14); }
-    .dropzone { min-height: 84px; display:flex; gap:10px; flex-wrap:wrap; align-content:flex-start; padding:10px; border-radius: 14px; border:1px dashed rgba(255,255,255,.18); background: rgba(255,255,255,.04); }
-
-    /* tier colors */
-    .tier-row[data-tier="S"] .badge { background: linear-gradient(135deg, #f87171, #fb923c); }
-    .tier-row[data-tier="A"] .badge { background: linear-gradient(135deg, #fb923c, #fbbf24); }
-    .tier-row[data-tier="B"] .badge { background: linear-gradient(135deg, #fbbf24, #34d399); }
-    .tier-row[data-tier="C"] .badge { background: linear-gradient(135deg, #34d399, #22d3ee); }
-    .tier-row[data-tier="D"] .badge { background: linear-gradient(135deg, #22d3ee, #8b5cf6); }
-
-    .pool-wrap { max-width: 1200px; margin: 0 auto 40px; padding: 0 18px; }
-    .pool { display:flex; gap:10px; flex-wrap:wrap; padding: 12px; border-radius: 14px; border:1px dashed rgba(255,255,255,.18); background: rgba(255,255,255,.04); min-height: 84px; }
-
-    .chip { --chip-bg: rgba(255,255,255,.06); display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius: 999px; border:1px solid rgba(255,255,255,.14); background: var(--chip-bg); cursor:grab; user-select:none; box-shadow: 0 6px 14px rgba(0,0,0,.25); transition: .15s transform ease, .15s box-shadow ease; }
-    .chip:active { cursor:grabbing; transform: translateY(1px) scale(.99); }
-    .chip .avatar { font-size: 18px; }
-    .chip .label { font-weight: 600; letter-spacing:.2px; }
-    .chip .del, .chip .edit { background: transparent; border: none; color: var(--muted); cursor:pointer; font-size:16px; padding: 0 4px; }
-    .chip .del:hover { color: #ff6b6b; }
-    .chip .edit:hover { color: #c6d0fb; }
-    .chip .handle { display:none }
-    .chip.dragging { opacity: .6; box-shadow: 0 4px 18px rgba(139,92,246,.35); }
-
-    .legend { display:flex; gap:8px; flex-wrap:wrap; }
-    .legend .dot { width:8px; height:8px; border-radius:50%; background: currentColor; margin-right:6px; }
-
-    footer { max-width: 1200px; margin: 32px auto 60px; padding:0 18px; color:var(--muted); display:flex; justify-content:space-between; align-items:center; gap:12px }
-    footer a { color: var(--txt); text-decoration: none; border-bottom:1px solid rgba(255,255,255,.18); }
-
-    /* Streamer mode */
-    .streamer body { font-size: 20px; }
-    .streamer .chip { padding:12px 14px; font-size: 22px; }
-    .streamer .badge { font-size: 28px; }
-
-    /* Responsive */
-    @media (max-width: 980px){
-      .hero { grid-template-columns: 1fr; }
-      .controls { grid-template-columns: 1fr; }
-      .tier-row { grid-template-columns: 56px 1fr; }
-      .hero h1 { font-size: 32px; }
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <nav class="nav">
-      <div class="logo">
-        <div class="mark">🍬</div>
-        <div class="brand">Beaux Sucres · ZEVENT</div>
-      </div>
-      <div class="spacer"></div>
-      <button class="btn small ghost" id="themeToggle" title="Basculer clair/sombre">🌓 Thème</button>
-      <button class="btn small ghost" id="streamToggle" title="Mode streamer (grand texte)">📺 Streamer</button>
-      <button class="btn small" id="saveBtn" title="Sauver dans ce navigateur">💾 Sauver</button>
-      <button class="btn small" id="resetBtn" title="Réinitialiser la grille">♻️ Reset</button>
-      <button class="btn small" id="exportBtn" title="Exporter JSON">⬇️ Export</button>
-      <button class="btn small" id="importBtn" title="Importer JSON">⬆️ Import</button>
-      <input type="file" id="importFile" accept="application/json" hidden />
-    </nav>
-  </header>
-
-  <main>
-    <section class="hero">
-      <div class="left card">
-        <div class="pulse"></div>
-        <h1>Nejda fait un ZEVENT ✨</h1>
-        <p>Bienvenue sur le site des <strong>Beaux Sucres</strong> ! Construisez la <em>tier list</em> ultime en direct : ajoutez des sucreries (ou des pseudos), puis glissez-déposez dans les rangs S → D.</p>
-        <div style="height:14px"></div>
-        <div class="bar">
-          <span class="tag">Drag & drop</span>
-          <span class="tag">Sauvegarde locale</span>
-          <span class="tag">Export/Import JSON</span>
-          <span class="tag">Mode Stream</span>
-          <span class="tag">Confetti S-tier 🎉</span>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#16a34a" />
+    <title>Beaux Sucres · Tier List ZEVENT</title>
+    <meta name="description" content="Logiciel web PWA · Tier list interactive Beaux Sucres (ZEVENT) · Offline, export PNG, partage, undo/redo." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%8D%AC%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav">
+        <div class="logo">
+          <span class="mark" id="logoMark" aria-hidden="true">🍬</span>
+          <span class="brand">Beaux Sucres · ZEVENT</span>
         </div>
-      </div>
-      <div class="right card control-card">
-        <div class="row" aria-label="Ajouter un sucre">
-          <input id="nameInput" type="text" placeholder="Nom du sucre / pseudo" />
-          <input id="emojiInput" type="text" placeholder="Emoji (ex: 🍭)" style="max-width:120px" />
-          <input id="imgInput" type="url" placeholder="Image (URL, optionnel)" />
-          <button id="addBtn" class="btn primary">+ Ajouter</button>
-        </div>
-        <div class="row" style="justify-content:space-between">
-          <label>Astuce : double‑cliquez un sucre pour le renommer. Cliquez 🖊️ pour changer l'emoji.</label>
-          <div class="legend">
-            <span class="tag" title="Réinitialise les sucreries démo">Démo préremplie</span>
+        <div class="spacer"></div>
+        <button class="btn small ghost" id="stageToggle" title="Mode scène (plein écran)">🎬 Scène</button>
+        <button class="btn small ghost" id="zeventToggle" title="Activer le thème ZEVENT">🎨 ZEVENT</button>
+        <button class="btn small ghost" id="themeToggle" title="Basculer clair/sombre">🌓 Thème</button>
+        <button class="btn small ghost" id="streamToggle" title="Mode streamer">📺 Streamer</button>
+        <button class="btn small" id="saveBtn" title="Sauver dans ce navigateur">💾 Sauver</button>
+        <button class="btn small" id="resetBtn" title="Réinitialiser la grille">♻️ Reset</button>
+        <button class="btn small" id="exportBtn" title="Exporter JSON">⬇️ Export</button>
+        <button class="btn small" id="importBtn" title="Importer JSON">⬆️ Import</button>
+        <input type="file" id="importFile" accept="application/json" hidden />
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="left card">
+          <div class="pulse" aria-hidden="true"></div>
+          <h1>Nejda fait un ZEVENT ✨</h1>
+          <p>Bienvenue dans le <strong>logiciel web</strong> des <strong>Beaux Sucres</strong> : crée ta <em>tier list</em>, sauvegarde, partage, exporte en PNG — même <em>offline</em>.</p>
+          <div class="bar" role="list">
+            <span class="tag" role="listitem">Drag & drop</span>
+            <span class="tag" role="listitem">Undo / Redo</span>
+            <span class="tag" role="listitem">Export PNG</span>
+            <span class="tag" role="listitem">PWA Offline</span>
+            <span class="tag" role="listitem">Confetti S-tier 🎉</span>
           </div>
         </div>
-      </div>
-    </section>
-
-    <section class="controls">
-      <div class="card control-card">
-        <strong>À propos</strong>
-        <p style="color:var(--muted); margin:0">Un petit site fan‑made pour célébrer <em>ZEVENT</em> avec la communauté de Nejda. Tout est côté client — aucune donnée envoyée ailleurs. ✌️</p>
-        <div class="row" style="gap:12px">
-          <button class="btn ghost small" id="shareBtn" title="Lien partageable">🔗 Lien partageable</button>
-          <input id="shareField" type="text" readonly placeholder="Votre lien apparaîtra ici" />
+        <div class="right card control-card">
+          <div class="row" aria-label="Ajouter un sucre">
+            <input id="nameInput" type="text" placeholder="Nom du sucre / pseudo" aria-label="Nom" />
+            <input id="emojiInput" type="text" placeholder="Emoji (ex: 🍭)" aria-label="Emoji" />
+            <input id="imgInput" type="url" placeholder="Image (URL, optionnel)" aria-label="Image (URL)" />
+            <button id="addBtn" class="btn primary">+ Ajouter</button>
+          </div>
+          <div class="row between">
+            <label class="muted">Astuce : double‑clique un sucre pour le renommer. 🖊️ pour changer l’emoji / image.</label>
+            <div class="legend">
+              <button class="btn small ghost" id="demoBtn" title="Réinjecter sucreries démo">Démo</button>
+            </div>
+          </div>
+          <div class="row between">
+            <input id="filterInput" type="text" placeholder="Filtrer la réserve (recherche)…" aria-label="Filtre" />
+            <div class="stats" id="stats" aria-live="polite"></div>
+          </div>
+          <div class="row wrap">
+            <button class="btn small ghost" id="shareBtn" title="Créer un lien partageable">🔗 Lien</button>
+            <input id="shareField" type="text" readonly placeholder="Le lien apparaîtra ici" aria-label="Lien partageable" />
+            <button class="btn small ghost" id="alphaSortBtn" title="Trier chaque rang A→Z">🔤 Trier A→Z</button>
+            <button class="btn small ghost" id="undoBtn" title="Annuler (Ctrl+Z)">↶ Annuler</button>
+            <button class="btn small ghost" id="redoBtn" title="Rétablir (Ctrl+Y)">↷ Rétablir</button>
+            <button class="btn small" id="exportPngBtn" title="Exporter une capture PNG de la tier list">🖼️ Export PNG</button>
+          </div>
         </div>
+      </section>
+
+      <section class="tierboard" id="board" aria-label="Grille de classement">
+        <div class="tier-row" data-tier="S"><div class="badge" data-badge="S" aria-label="Compteur rang S">S</div><div class="dropzone" data-zone="S" aria-label="Rang S (légendaire)"></div></div>
+        <div class="tier-row" data-tier="A"><div class="badge" data-badge="A" aria-label="Compteur rang A">A</div><div class="dropzone" data-zone="A" aria-label="Rang A"></div></div>
+        <div class="tier-row" data-tier="B"><div class="badge" data-badge="B" aria-label="Compteur rang B">B</div><div class="dropzone" data-zone="B" aria-label="Rang B"></div></div>
+        <div class="tier-row" data-tier="C"><div class="badge" data-badge="C" aria-label="Compteur rang C">C</div><div class="dropzone" data-zone="C" aria-label="Rang C"></div></div>
+        <div class="tier-row" data-tier="D"><div class="badge" data-badge="D" aria-label="Compteur rang D">D</div><div class="dropzone" data-zone="D" aria-label="Rang D"></div></div>
+      </section>
+
+      <div class="pool-wrap">
+        <h3 class="muted">🎒 Réserve — sucreries en attente</h3>
+        <div class="pool dropzone" data-zone="pool" id="pool" aria-label="Réserve"></div>
       </div>
-      <div class="card control-card">
-        <strong>Raccourcis</strong>
-        <p style="color:var(--muted); margin:0">Sélectionnez un sucre puis utilisez <code>1..5</code> pour l'envoyer vers S, A, B, C, D. <code>Suppr</code> pour supprimer.</p>
-        <div class="row">
-          <button class="btn small" id="demoBtn">Ré‑injecter la démo</button>
-        </div>
+    </main>
+
+    <footer class="site-footer">
+      <div>Fait avec ❤️ pour la commu des Beaux Sucres • <span class="hash">#ZEVENT</span></div>
+      <div>Design/Code : <strong>toi + moi</strong></div>
+    </footer>
+
+    <template id="chipTemplate">
+      <div class="chip" draggable="true" tabindex="0" role="button" aria-grabbed="false">
+        <span class="avatar" aria-hidden="true">🍬</span>
+        <span class="label">Sucre</span>
+        <button class="edit" title="Changer emoji" aria-label="Changer emoji">🖊️</button>
+        <button class="del" title="Supprimer" aria-label="Supprimer">✖</button>
       </div>
-    </section>
+    </template>
 
-    <section class="tierboard" id="board" aria-label="Grille de classement">
-      <div class="tier-row" data-tier="S">
-        <div class="badge" aria-hidden="true">S</div>
-        <div class="dropzone" data-zone="S" aria-label="Rang S (légendaire)"></div>
-      </div>
-      <div class="tier-row" data-tier="A">
-        <div class="badge" aria-hidden="true">A</div>
-        <div class="dropzone" data-zone="A" aria-label="Rang A"></div>
-      </div>
-      <div class="tier-row" data-tier="B">
-        <div class="badge" aria-hidden="true">B</div>
-        <div class="dropzone" data-zone="B" aria-label="Rang B"></div>
-      </div>
-      <div class="tier-row" data-tier="C">
-        <div class="badge" aria-hidden="true">C</div>
-        <div class="dropzone" data-zone="C" aria-label="Rang C"></div>
-      </div>
-      <div class="tier-row" data-tier="D">
-        <div class="badge" aria-hidden="true">D</div>
-        <div class="dropzone" data-zone="D" aria-label="Rang D"></div>
-      </div>
-    </section>
+    <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+    <canvas id="fx" class="fx"></canvas>
 
-    <div class="pool-wrap">
-      <h3 style="margin: 0 0 8px; font-size: 16px; color: var(--muted);">🎒 Réserve — sucreries en attente</h3>
-      <div class="pool dropzone" data-zone="pool" id="pool" aria-label="Réserve"></div>
-    </div>
-  </main>
-
-  <footer>
-    <div>Fait avec ❤️ pour la commu des Beaux Sucres • <span style="color:#fff">#ZEVENT</span></div>
-    <div>Design/Code: <strong>toi + moi</strong> · <a href="#" id="downloadPNG" title="(optionnel) capture via la touche Impr. écran 😄">Capture?</a></div>
-  </footer>
-
-  <!-- Template pour un sucre -->
-  <template id="chipTemplate">
-    <div class="chip" draggable="true" tabindex="0" role="button" aria-grabbed="false">
-      <span class="avatar" aria-hidden="true">🍬</span>
-      <span class="label">Sucre</span>
-      <button class="edit" title="Changer emoji" aria-label="Changer emoji">🖊️</button>
-      <button class="del" title="Supprimer" aria-label="Supprimer">✖</button>
-    </div>
-  </template>
-
-  <canvas id="fx" style="position:fixed; inset:0; pointer-events:none"></canvas>
-
-  <script>
-  (function(){
-    const stateKey = 'beaux-sucres-tier-state-v1';
-    const themeKey = 'beaux-sucres-theme';
-
-    const boardEl = document.getElementById('board');
-    const poolEl = document.getElementById('pool');
-
-    const nameInput = document.getElementById('nameInput');
-    const emojiInput = document.getElementById('emojiInput');
-    const imgInput = document.getElementById('imgInput');
-    const addBtn = document.getElementById('addBtn');
-
-    const saveBtn = document.getElementById('saveBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const importBtn = document.getElementById('importBtn');
-    const importFile = document.getElementById('importFile');
-    const shareBtn = document.getElementById('shareBtn');
-    const shareField = document.getElementById('shareField');
-    const demoBtn = document.getElementById('demoBtn');
-
-    const themeToggle = document.getElementById('themeToggle');
-    const streamToggle = document.getElementById('streamToggle');
-
-    const chipTpl = document.getElementById('chipTemplate');
-
-    const dropzones = Array.from(document.querySelectorAll('.dropzone'));
-
-    const S = { tiers: { S:[], A:[], B:[], C:[], D:[] }, pool:[] };
-
-    function uid(){ return (crypto?.randomUUID?.() || Math.random().toString(36).slice(2)) }
-
-    function demoData(){
-      return {
-        tiers: { S:[], A:[], B:[], C:[], D:[] },
-        pool: [
-          {id:uid(), name:'Nejda', emoji:'🪄'},
-          {id:uid(), name:'Beau Sucre', emoji:'🍬'},
-          {id:uid(), name:'Croissant', emoji:'🥐'},
-          {id:uid(), name:'Café', emoji:'☕'},
-          {id:uid(), name:'Chat', emoji:'🐈'},
-          {id:uid(), name:'Crème brûlée', emoji:'🍮'},
-          {id:uid(), name:'Team', emoji:'🤝'},
-          {id:uid(), name:'Z Event', emoji:'💚'}
-        ]
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').catch(()=>{});
+        });
       }
-    }
-
-    function load(){
-      // From URL hash (share)
-      try{
-        const hash = new URL(location.href).hash;
-        if(hash.startsWith('#s=')){
-          const json = decodeURIComponent(atob(hash.slice(3)));
-          const obj = JSON.parse(json);
-          Object.assign(S, obj);
-          history.replaceState(null, '', location.pathname + location.search);
-          return;
-        }
-      }catch(e){ console.warn('Hash import failed', e) }
-
-      const raw = localStorage.getItem(stateKey);
-      if(raw){
-        try{ Object.assign(S, JSON.parse(raw)); }
-        catch(e){ console.warn('Bad state, using demo', e); Object.assign(S, demoData()); }
-      } else {
-        Object.assign(S, demoData());
-      }
-    }
-
-    function save(){ localStorage.setItem(stateKey, JSON.stringify(S)); }
-
-    function clearEl(el){ while(el.firstChild) el.removeChild(el.firstChild); }
-
-    function createChip(item){
-      const el = chipTpl.content.firstElementChild.cloneNode(true);
-      el.dataset.id = item.id;
-      el.querySelector('.label').textContent = item.name;
-      const avatar = el.querySelector('.avatar');
-      if(item.img){
-        avatar.textContent = '';
-        const img = document.createElement('img');
-        img.src = item.img; img.alt = item.emoji || '🍬';
-        img.width = 20; img.height = 20; img.style.borderRadius='50%'; img.style.display='block';
-        avatar.appendChild(img);
-      } else {
-        avatar.textContent = item.emoji || '🍬';
-      }
-
-      el.addEventListener('dblclick', () => {
-        const newName = prompt('Nouveau nom ?', item.name);
-        if(newName){ item.name = newName.trim(); render(); save(); }
-      });
-
-      el.querySelector('.edit').addEventListener('click', (ev)=>{
-        ev.stopPropagation();
-        const newEmoji = prompt('Nouvel emoji (ou URL d\'image) ?', item.emoji || '');
-        if(!newEmoji) return;
-        if(/^https?:\/\//.test(newEmoji)) { item.img = newEmoji; item.emoji = ''; }
-        else { item.emoji = newEmoji; item.img = ''; }
-        render(); save();
-      });
-
-      el.querySelector('.del').addEventListener('click', (ev)=>{
-        ev.stopPropagation();
-        removeItem(item.id);
-      });
-
-      el.draggable = true;
-      el.addEventListener('dragstart', (e)=>{
-        e.dataTransfer.setData('text/plain', item.id);
-        requestAnimationFrame(()=> el.classList.add('dragging'));
-      });
-      el.addEventListener('dragend', ()=> el.classList.remove('dragging'));
-
-      el.addEventListener('keydown', (e)=>{
-        const map = { '1':'S', '2':'A', '3':'B', '4':'C', '5':'D' };
-        if(map[e.key]){ moveTo(item.id, map[e.key]); }
-        if(e.key==='Delete'){ removeItem(item.id); }
-      });
-
-      return el;
-    }
-
-    function allLists(){ return [S.pool, S.tiers.S, S.tiers.A, S.tiers.B, S.tiers.C, S.tiers.D]; }
-
-    function findItem(id){
-      for(const list of allLists()){
-        const i = list.findIndex(x=>x.id===id);
-        if(i>=0) return { list, index:i, item:list[i] };
-      }
-      return null;
-    }
-
-    function removeItem(id){
-      const f = findItem(id); if(!f) return;
-      f.list.splice(f.index,1); render(); save();
-    }
-
-    function moveTo(id, zone){
-      const f = findItem(id); if(!f) return;
-      f.list.splice(f.index,1);
-      if(zone==='pool') S.pool.push(f.item);
-      else S.tiers[zone].push(f.item);
-      render(); save();
-      if(zone==='S') confetti();
-    }
-
-    function render(){
-      // zones
-      for(const z of dropzones){ clearEl(z); }
-      for(const it of S.pool){ poolEl.appendChild(createChip(it)); }
-      for(const k of ['S','A','B','C','D']){
-        const zone = document.querySelector(`.dropzone[data-zone="${k}"]`);
-        for(const it of S.tiers[k]) zone.appendChild(createChip(it));
-      }
-    }
-
-    // Drag & drop handling
-    for(const zone of dropzones){
-      zone.addEventListener('dragover', (e)=>{ e.preventDefault(); });
-      zone.addEventListener('drop', (e)=>{
-        e.preventDefault();
-        const id = e.dataTransfer.getData('text/plain');
-        const target = zone.dataset.zone;
-        moveTo(id, target);
-      });
-    }
-
-    // UI actions
-    addBtn.addEventListener('click', ()=>{
-      const name = nameInput.value.trim();
-      const emoji = emojiInput.value.trim();
-      const img = imgInput.value.trim();
-      if(!name) return alert('Donne un petit nom à ton sucre ✨');
-      const item = { id:uid(), name, emoji: emoji || '🍬', img: /^https?:\/\//.test(img) ? img : '' };
-      S.pool.push(item); render(); save();
-      nameInput.value = ''; emojiInput.value = ''; imgInput.value = '';
-      nameInput.focus();
-    });
-
-    saveBtn.addEventListener('click', ()=>{ save(); flash(saveBtn); });
-    resetBtn.addEventListener('click', ()=>{
-      if(confirm('Réinitialiser la grille et la réserve ?')){ Object.assign(S, demoData()); render(); save(); }
-    });
-
-    exportBtn.addEventListener('click', ()=>{
-      const blob = new Blob([JSON.stringify(S,null,2)], {type:'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'beaux-sucres-tier.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-
-    importBtn.addEventListener('click', ()=> importFile.click());
-    importFile.addEventListener('change', async (e)=>{
-      const file = e.target.files[0]; if(!file) return;
-      const text = await file.text();
-      try{ const obj = JSON.parse(text); Object.assign(S, obj); render(); save(); }
-      catch(err){ alert('Fichier invalide : ' + err.message); }
-      finally { importFile.value = '' }
-    });
-
-    shareBtn.addEventListener('click', ()=>{
-      try{
-        const json = JSON.stringify(S);
-        const hash = '#s=' + btoa(encodeURIComponent(json));
-        const url = location.origin + location.pathname + hash;
-        shareField.value = url; shareField.select(); document.execCommand('copy');
-        flash(shareBtn, 'Copié !');
-      }catch(e){ alert('Impossible de générer le lien : ' + e.message) }
-    });
-
-    themeToggle.addEventListener('click', ()=>{
-      const cur = document.documentElement.dataset.theme || 'dark';
-      const next = cur==='dark' ? 'light' : 'dark';
-      applyTheme(next);
-    });
-
-    streamToggle.addEventListener('click', ()=>{
-      document.documentElement.classList.toggle('streamer');
-    });
-
-    function applyTheme(mode){
-      document.documentElement.dataset.theme = mode;
-      localStorage.setItem(themeKey, mode);
-      if(mode==='light'){
-        document.body.style.background = 'linear-gradient(180deg, #fafafa, #efeff4)';
-        document.body.style.color = '#0b0c10';
-      } else {
-        document.body.style.background = '';
-        document.body.style.color = '';
-      }
-    }
-
-    function flash(btn, txt){
-      const old = btn.textContent; if(txt) btn.textContent = txt;
-      btn.style.transform='scale(1.05)';
-      setTimeout(()=>{ btn.style.transform=''; if(txt){ btn.textContent = old; } }, 600);
-    }
-
-    // Confetti (mini)
-    const canvas = document.getElementById('fx');
-    const ctx = canvas.getContext('2d');
-    let confs = [];
-    function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
-    window.addEventListener('resize', resize); resize();
-
-    function confetti(){
-      const N = 90;
-      for(let i=0;i<N;i++){
-        confs.push({ x: Math.random()*canvas.width, y: -20, vy: 2+Math.random()*3, vx: -2+Math.random()*4, s: 4+Math.random()*4, r: Math.random()*Math.PI, vr: (-.2+Math.random()*.4) });
-      }
-    }
-    function tick(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.globalAlpha = .9;
-      for(const c of confs){
-        c.x += c.vx; c.y += c.vy; c.r += c.vr; c.vy += 0.03;
-        ctx.save();
-        ctx.translate(c.x,c.y); ctx.rotate(c.r);
-        ctx.fillStyle = `hsl(${(c.x+c.y)%360}, 80%, 60%)`;
-        ctx.fillRect(-c.s/2,-c.s/2,c.s,c.s);
-        ctx.restore();
-      }
-      confs = confs.filter(c=> c.y < canvas.height+40);
-      requestAnimationFrame(tick);
-    }
-    tick();
-
-    // Init
-    load();
-    render();
-    applyTheme(localStorage.getItem(themeKey)||'dark');
-
-    // Demo button
-    demoBtn.addEventListener('click', ()=>{ Object.assign(S, demoData()); render(); save(); });
-
-  })();
-  </script>
-</body>
+    </script>
+    <script src="app.js"></script>
+    <noscript>Veuillez activer JavaScript pour utiliser l'application.</noscript>
+  </body>
 </html>
+
+
+===================== styles.css =====================
+:root {
+  --bg: #0b0e0c;
+  --bg-2: #0f1510;
+  --glass: rgba(255,255,255,0.06);
+  --txt: #eef2f1;
+  --muted: #9aa5a0;
+  --brand: #8b5cf6;
+  --brand-2: #22d3ee;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --radius: 18px;
+  --ring: 0 0 0 3px rgba(34,197,94,.35);
+}
+/* Thème ZEVENT (charcoal + verts) */
+:root[data-theme="zevent"]{
+  --bg:#0a0d0a; --bg-2:#0f1711; --txt:#e8f5e9; --muted:#a3b9a6; --brand:#16a34a; --brand-2:#22c55e;
+}
+@media (prefers-color-scheme: light){ :root{ --txt:#0b0c10; --muted:#5b6170; } }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+  background: radial-gradient(1200px 800px at 80% -10%, rgba(139,92,246,.25), transparent 60%),
+              radial-gradient(1200px 800px at 0% 100%, rgba(34,211,238,.18), transparent 60%),
+              linear-gradient(180deg, var(--bg), var(--bg-2));
+  color:var(--txt);
+}
+:root[data-theme="zevent"] body{ /* gradient override for zevent */
+  background: radial-gradient(1000px 600px at 80% -10%, rgba(34,197,94,.18), transparent 60%),
+              radial-gradient(1000px 600px at 0% 100%, rgba(22,163,74,.16), transparent 60%),
+              linear-gradient(180deg, var(--bg), var(--bg-2));
+}
+.site-header{position:sticky;top:0;z-index:10;backdrop-filter:saturate(140%) blur(8px);background:linear-gradient(180deg, rgba(15,15,20,.85), rgba(15,15,20,.35));border-bottom:1px solid rgba(255,255,255,.06)}
+.nav{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:14px 18px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800}
+.logo .mark{font-size:24px;display:inline-flex;align-items:center}
+.logo .mark svg{width:22px;height:22px;display:block;filter:drop-shadow(0 6px 10px rgba(34,197,94,.4))}
+.nav .spacer{flex:1}
+.btn{cursor:pointer;border:none;border-radius:12px;padding:10px 14px;color:var(--txt);background:var(--glass);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.08);box-shadow:var(--shadow);transition:.2s transform ease, .2s background ease, .2s box-shadow ease}
+.btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.09)}
+.btn:active{transform:translateY(0)}
+.btn:focus-visible{outline:none;box-shadow:var(--ring)}
+.btn.primary{background:linear-gradient(135deg, var(--brand), var(--brand-2));border-color:transparent}
+.btn.ghost{background:transparent;border-color:rgba(255,255,255,.12)}
+.btn.small{padding:8px 10px;border-radius:10px;font-size:13px}
+.hero{max-width:1200px;margin:26px auto 8px;display:grid;grid-template-columns:1.3fr 1fr;gap:22px;padding:0 18px}
+.card{background:var(--glass);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);box-shadow:var(--shadow)}
+.hero .left{padding:26px;position:relative;overflow:hidden}
+.hero h1{margin:0 0 6px;font-size:40px;line-height:1.05}
+.hero p{margin:0;color:var(--muted)}
+.hero .pulse{position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;background:radial-gradient(600px 240px at 20% 0%, rgba(139,92,246,.15), transparent),radial-gradient(600px 240px at 100% 100%, rgba(34,211,238,.14), transparent);mask:linear-gradient(#000 40%, transparent)}
+:root[data-theme="zevent"] .hero .pulse{background:radial-gradient(600px 240px at 20% 0%, rgba(34,197,94,.18), transparent),radial-gradient(600px 240px at 100% 100%, rgba(16,185,129,.16), transparent)}
+.hero .right{padding:20px;display:grid;gap:12px;align-content:start}
+.bar{display:flex;gap:10px;flex-wrap:wrap}
+.tag{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);font-size:13px}
+.controls{max-width:1200px;margin:6px auto 20px;padding:0 18px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.control-card{padding:16px;display:grid;gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row.between{justify-content:space-between}
+.row.wrap{flex-wrap:wrap}
+.row input[type="text"], .row input[type="url"]{flex:1;min-width:180px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--txt)}
+.row input:focus-visible{outline:none;box-shadow:var(--ring)}
+.muted{color:var(--muted)}
+.tierboard{max-width:1200px;margin:0 auto;padding:0 18px 22px;display:grid;gap:10px}
+.tier-row{display:grid;grid-template-columns:140px 1fr;gap:10px;align-items:stretch}
+.badge{display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;border-radius:14px;letter-spacing:.8px;background:linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.14);padding:10px}
+.dropzone{min-height:92px;display:flex;gap:10px;flex-wrap:wrap;align-content:flex-start;padding:12px;border-radius:14px;border:1px dashed rgba(255,255,255,.18);background:rgba(255,255,255,.04)}
+.tier-row[data-tier="S"] .badge{background:linear-gradient(135deg,#f87171,#fb923c)}
+.tier-row[data-tier="A"] .badge{background:linear-gradient(135deg,#fb923c,#fbbf24)}
+.tier-row[data-tier="B"] .badge{background:linear-gradient(135deg,#fbbf24,#34d399)}
+.tier-row[data-tier="C"] .badge{background:linear-gradient(135deg,#34d399,#22d3ee)}
+.tier-row[data-tier="D"] .badge{background:linear-gradient(135deg,#22d3ee,#8b5cf6)}
+.pool-wrap{max-width:1200px;margin:0 auto 40px;padding:0 18px}
+.pool{display:flex;gap:10px;flex-wrap:wrap;padding:12px;border-radius:14px;border:1px dashed rgba(255,255,255,.18);background:rgba(255,255,255,.04);min-height:92px}
+.chip{--chip-bg:rgba(255,255,255,.06);display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:var(--chip-bg);cursor:grab;user-select:none;box-shadow:0 6px 14px rgba(0,0,0,.25);transition:.15s transform ease, .15s box-shadow ease}
+.chip:active{cursor:grabbing;transform:translateY(1px) scale(.99)}
+.chip:focus-visible{outline:none;box-shadow:var(--ring)}
+.chip .avatar{font-size:18px}
+.chip .label{font-weight:600;letter-spacing:.2px}
+.chip .del,.chip .edit{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px}
+.chip .del:hover{color:#ff6b6b}
+.chip .edit:hover{color:#c6d0fb}
+.chip.dragging{opacity:.6;box-shadow:0 4px 18px rgba(139,92,246,.35)}
+.fx{position:fixed;inset:0;pointer-events:none}
+.site-footer{max-width:1200px;margin:32px auto 60px;padding:0 18px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.site-footer a{color:inherit}
+.hash{color:#fff}
+
+/* Mode scène (plein écran) */
+:root.stage .site-header, :root.stage .hero, :root.stage .pool-wrap { display:none; }
+:root.stage .tierboard{ max-width:1400px; padding-top:18px; }
+
+#toast{ position:fixed; right:16px; bottom:16px; background:rgba(20,20,25,.9); color:#fff; padding:10px 14px; border-radius:12px; box-shadow:var(--shadow); opacity:0; transform:translateY(6px); pointer-events:none; transition:.25s; }
+#toast.show{ opacity:1; transform:translateY(0); }
+
+@media (max-width:980px){.hero{grid-template-columns:1fr}.tier-row{grid-template-columns:110px 1fr}.hero h1{font-size:32px}}
+
+
+===================== app.js =====================
+'use strict';
+(function(){
+  const APP_VERSION = '4.0.0';
+  const stateKey = 'beaux-sucres-tier-state-v4';
+  const themeKey = 'beaux-sucres-theme';
+
+  const boardEl = document.getElementById('board');
+  const poolEl = document.getElementById('pool');
+  const nameInput = document.getElementById('nameInput');
+  const emojiInput = document.getElementById('emojiInput');
+  const imgInput = document.getElementById('imgInput');
+  const addBtn = document.getElementById('addBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const importFile = document.getElementById('importFile');
+  const shareBtn = document.getElementById('shareBtn');
+  const shareField = document.getElementById('shareField');
+  const demoBtn = document.getElementById('demoBtn');
+  const filterInput = document.getElementById('filterInput');
+  const statsEl = document.getElementById('stats');
+  const alphaSortBtn = document.getElementById('alphaSortBtn');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  const themeToggle = document.getElementById('themeToggle');
+  const zeventToggle = document.getElementById('zeventToggle');
+  const stageToggle = document.getElementById('stageToggle');
+  const streamToggle = document.getElementById('streamToggle');
+  const exportPngBtn = document.getElementById('exportPngBtn');
+  const logoMark = document.getElementById('logoMark');
+  const chipTpl = document.getElementById('chipTemplate');
+  const dropzones = Array.from(document.querySelectorAll('.dropzone'));
+  const toastEl = document.getElementById('toast');
+
+  const undo = { past: [], future: [] };
+  const S = { _v: APP_VERSION, tiers: { S:[], A:[], B:[], C:[], D:[] }, pool:[] };
+
+  function pushHistory(){ undo.past.push(JSON.stringify(S)); undo.future.length=0; }
+  function undoAction(){ if(!undo.past.length) return; undo.future.push(JSON.stringify(S)); Object.assign(S, JSON.parse(undo.past.pop())); render(); save(false); }
+  function redoAction(){ if(!undo.future.length) return; undo.past.push(JSON.stringify(S)); Object.assign(S, JSON.parse(undo.future.pop())); render(); save(false); }
+
+  function uid(){ return (crypto?.randomUUID?.() || Math.random().toString(36).slice(2)); }
+
+  function demoData(){
+    return { _v: APP_VERSION, tiers:{S:[],A:[],B:[],C:[],D:[]}, pool:[
+      {id:uid(), name:'Nejda', emoji:'🪄'},
+      {id:uid(), name:'Beau Sucre', emoji:'🍬'},
+      {id:uid(), name:'Croissant', emoji:'🥐'},
+      {id:uid(), name:'Café', emoji:'☕'},
+      {id:uid(), name:'Chat', emoji:'🐈'},
+      {id:uid(), name:'Crème brûlée', emoji:'🍮'},
+      {id:uid(), name:'Team', emoji:'🤝'},
+      {id:uid(), name:'Z Event', emoji:'💚'}
+    ]};
+  }
+
+  function load(){
+    try{
+      const hash = new URL(location.href).hash;
+      if(hash.startsWith('#s=')){
+        const json = decodeURIComponent(atob(hash.slice(3)));
+        Object.assign(S, JSON.parse(json));
+        window.history.replaceState(null, '', location.pathname + location.search);
+        return;
+      }
+    }catch(e){ console.warn('Hash import failed', e); }
+    try{
+      const raw = localStorage.getItem(stateKey);
+      if(raw){ Object.assign(S, JSON.parse(raw)); }
+      else { Object.assign(S, demoData()); }
+    }catch(e){ console.warn('State load error, using demo', e); Object.assign(S, demoData()); }
+  }
+
+  function save(push=true){ if(push) pushHistory(); try{ localStorage.setItem(stateKey, JSON.stringify(S)); }catch{} updateStatsAndBadges(); toast('Sauvegardé'); }
+
+  function clearEl(el){ while(el.firstChild) el.removeChild(el.firstChild); }
+
+  function createChip(item){
+    const el = chipTpl.content.firstElementChild.cloneNode(true);
+    el.dataset.id = item.id;
+    const label = el.querySelector('.label');
+    const avatar = el.querySelector('.avatar');
+    label.textContent = item.name;
+    if(item.img){
+      avatar.textContent=''; const img=document.createElement('img'); img.src=item.img; img.alt=item.emoji||'🍬'; img.width=20; img.height=20; img.style.borderRadius='50%'; img.style.display='block'; avatar.appendChild(img);
+    } else { avatar.textContent = item.emoji || '🍬'; }
+
+    el.addEventListener('dblclick', ()=>{ const s = prompt('Nouveau nom ?', item.name); if(s){ item.name=s.trim(); render(); save(); }});
+    el.querySelector('.edit').addEventListener('click', (ev)=>{ ev.stopPropagation(); const e = prompt('Nouvel emoji (ou URL d\'image) ?', item.emoji||''); if(!e) return; if(/^https?:\/\//.test(e)){ item.img=e; item.emoji=''; } else { item.emoji=e; item.img=''; } render(); save(); });
+    el.querySelector('.del').addEventListener('click', (ev)=>{ ev.stopPropagation(); if(confirm('Supprimer ce sucre ?')) removeItem(item.id); });
+
+    el.draggable = true;
+    el.addEventListener('dragstart', (e)=>{ e.dataTransfer.setData('text/plain', item.id); requestAnimationFrame(()=> el.classList.add('dragging')); });
+    el.addEventListener('dragend', ()=> el.classList.remove('dragging'));
+
+    el.addEventListener('keydown', (e)=>{
+      const map = { '1':'S','2':'A','3':'B','4':'C','5':'D' };
+      if(map[e.key]) moveTo(item.id, map[e.key]);
+      if(e.key==='Delete') removeItem(item.id);
+      if(['ArrowLeft','ArrowRight'].includes(e.key)){
+        const order = ['pool','S','A','B','C','D'];
+        const loc = locate(item.id); const idx = order.indexOf(loc.zone);
+        const next = order[(idx + (e.key==='ArrowRight'?1:-1) + order.length)%order.length];
+        moveTo(item.id, next);
+      }
+    });
+    return el;
+  }
+
+  function locate(id){
+    for(const zone of ['pool','S','A','B','C','D']){
+      const list = zone==='pool'? S.pool : S.tiers[zone];
+      const i = list.findIndex(x=>x.id===id); if(i>=0) return { zone, list, index:i, item:list[i] };
+    } return null;
+  }
+
+  function removeItem(id){ const f = locate(id); if(!f) return; f.list.splice(f.index,1); render(); save(); }
+
+  function moveTo(id, zone, index){
+    const f = locate(id); if(!f) return;
+    const item = f.item; f.list.splice(f.index,1);
+    const target = zone==='pool' ? S.pool : S.tiers[zone];
+    if(typeof index==='number' && index>=0) target.splice(index,0,item); else target.push(item);
+    render(); save(); if(zone==='S') confetti();
+  }
+
+  function render(){
+    for(const z of dropzones) clearEl(z);
+    const q = (filterInput.value||'').toLowerCase();
+    for(const it of S.pool){ if(!q || it.name.toLowerCase().includes(q)) poolEl.appendChild(createChip(it)); }
+    for(const k of ['S','A','B','C','D']){
+      const zone = document.querySelector(`.dropzone[data-zone="${k}"]`);
+      for(const it of S.tiers[k]) zone.appendChild(createChip(it));
+    }
+    updateStatsAndBadges();
+  }
+
+  // drop with insertion position preview
+  const placeholder = (()=>{ let _ph=null; return {
+    get(){ if(!_ph){ _ph=document.createElement('div'); _ph.className='chip'; _ph.style.opacity=.35; _ph.style.width='80px'; _ph.style.height='36px'; } return _ph; },
+    remove(){ if(_ph&&_ph.parentNode) _ph.parentNode.removeChild(_ph); },
+    index(zone){ return Array.from(zone.children).indexOf(_ph); }
+  }})();
+
+  for(const zone of dropzones){
+    zone.addEventListener('dragover', (e)=>{ e.preventDefault(); const dragging=document.querySelector('.chip.dragging'); if(!dragging) return; const afterEl = nearestChip(zone, e.clientX, e.clientY); if(afterEl==null) zone.appendChild(placeholder.get()); else zone.insertBefore(placeholder.get(), afterEl); });
+    zone.addEventListener('dragleave', ()=> placeholder.remove());
+    zone.addEventListener('drop', (e)=>{ e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); const target = zone.dataset.zone; const idx = placeholder.index(zone); moveTo(id, target, idx); placeholder.remove(); });
+  }
+
+  function nearestChip(zone, x, y){
+    const chips = [...zone.querySelectorAll('.chip:not(.dragging)')];
+    let nearest=null, nearestDist=Infinity;
+    for(const c of chips){ const r=c.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2; const d=(cx-x)**2+(cy-y)**2; if(d<nearestDist){ nearestDist=d; nearest=c; } }
+    return nearest;
+  }
+
+  // Stats + badges (compteur et score)
+  function updateStatsAndBadges(){
+    const weights = { S:5, A:4, B:3, C:2, D:1 };
+    let total=0, score=0;
+    for(const k of ['S','A','B','C','D']){
+      const n = S.tiers[k].length; total += n; score += n * weights[k];
+      const badge = document.querySelector(`.badge[data-badge="${k}"]`);
+      if(badge) badge.textContent = `${k} (${n})`;
+    }
+    const avg = total? (score/total).toFixed(2) : '0.00';
+    statsEl.textContent = `Total=${total} • Score=${score} • Moyenne=${avg}`;
+  }
+
+  // UI actions
+  addBtn.addEventListener('click', ()=>{
+    const name = nameInput.value.trim();
+    const emoji = emojiInput.value.trim();
+    const img = imgInput.value.trim();
+    if(!name) return alert('Donne un petit nom à ton sucre ✨');
+    if(S.pool.concat(...Object.values(S.tiers)).some(x=>x.name.toLowerCase()===name.toLowerCase())){
+      if(!confirm('Un sucre porte déjà ce nom. Ajouter quand même ?')) return;
+    }
+    const item = { id:uid(), name, emoji: emoji || '🍬', img: /^https?:\/\//.test(img) ? img : '' };
+    S.pool.push(item); render(); save();
+    nameInput.value=''; emojiInput.value=''; imgInput.value=''; nameInput.focus();
+  });
+
+  saveBtn.addEventListener('click', ()=> save());
+  resetBtn.addEventListener('click', ()=>{ if(confirm('Réinitialiser la grille et la réserve ?')){ Object.assign(S, demoData()); render(); save(); }});
+  exportBtn.addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='beaux-sucres-tier.json'; a.click(); URL.revokeObjectURL(a.href); toast('Export JSON prêt'); });
+  importBtn.addEventListener('click', ()=> importFile.click());
+  importFile.addEventListener('change', async (e)=>{ const file=e.target.files[0]; if(!file) return; const text=await file.text(); try{ const obj=JSON.parse(text); Object.assign(S, obj); render(); save(); toast('Import réussi'); } catch(err){ alert('Fichier invalide : '+err.message); } finally{ importFile.value=''; } });
+  shareBtn.addEventListener('click', async ()=>{ try{ const json=JSON.stringify(S); const hash='#s='+btoa(encodeURIComponent(json)); const url=location.origin+location.pathname+hash; shareField.value=url; if(navigator.clipboard) await navigator.clipboard.writeText(url); toast('Lien copié'); }catch(e){ shareField.select(); document.execCommand('copy'); toast('Lien prêt'); } });
+  alphaSortBtn.addEventListener('click', ()=>{ for(const k of ['S','A','B','C','D']){ S.tiers[k].sort((a,b)=>a.name.localeCompare(b.name)); } render(); save(); });
+  undoBtn.addEventListener('click', undoAction); redoBtn.addEventListener('click', redoAction);
+  filterInput.addEventListener('input', render);
+
+  document.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redoAction():undoAction(); }});
+
+  // Thèmes + scène
+  themeToggle.addEventListener('click', ()=>{
+    const cur=document.documentElement.dataset.theme||'dark';
+    const next = cur==='light' ? 'dark' : 'light';
+    applyTheme(next); localStorage.setItem(themeKey, next);
+  });
+  zeventToggle.addEventListener('click', ()=>{ applyTheme('zevent'); localStorage.setItem(themeKey, 'zevent'); });
+  stageToggle.addEventListener('click', ()=>{ document.documentElement.classList.toggle('stage'); });
+  streamToggle.addEventListener('click', ()=> document.documentElement.classList.toggle('streamer'));
+
+  function applyTheme(mode){
+    document.documentElement.dataset.theme=mode;
+    if(mode==='light'){
+      document.body.style.background='linear-gradient(180deg,#fafafa,#efeff4)'; document.body.style.color='#0b0c10'; logoMark.innerHTML = '🍬';
+    } else if(mode==='zevent'){
+      document.body.style.background=''; document.body.style.color=''; logoMark.innerHTML = ZLogoSVG();
+    } else { document.body.style.background=''; document.body.style.color=''; logoMark.innerHTML = '🍬'; }
+  }
+  function ZLogoSVG(){
+    return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#16a34a"/><stop offset="100%" stop-color="#22c55e"/></linearGradient></defs>
+      <path d="M10 16h38l-26 28h32v8H14l26-28H10z" fill="url(#g)"/>
+      <circle cx="18" cy="14" r="4" fill="#16a34a"/>
+    </svg>`;
+  }
+
+  // Export PNG (sans lib externe) via SVG foreignObject
+  exportPngBtn.addEventListener('click', async ()=>{
+    try{
+      const target = document.querySelector('.tierboard');
+      const rect = target.getBoundingClientRect();
+      const scale = Math.min(2, 1400/rect.width);
+
+      const clone = target.cloneNode(true);
+      for(const img of clone.querySelectorAll('img')){
+        try{ const url = new URL(img.src, location.href); if(url.origin !== location.origin){ const span = document.createElement('span'); span.textContent='🍬'; span.style.fontSize='18px'; img.replaceWith(span); } }
+        catch{ /* ignore */ }
+      }
+
+      let cssText = '';
+      for(const link of document.querySelectorAll('link[rel="stylesheet"]')){
+        try{ if(link.href.startsWith(location.origin)){ const res = await fetch(link.href); cssText += "
+" + await res.text(); } }
+        catch{ /* ignore */ }
+      }
+      cssText += "
+body{background:#000;color:#fff;font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial;}";
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
+      svg.setAttribute('width', Math.ceil(rect.width*scale));
+      svg.setAttribute('height', Math.ceil(rect.height*scale));
+      svg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+
+      const fo = document.createElementNS('http://www.w3.org/2000/svg','foreignObject');
+      fo.setAttribute('x','0'); fo.setAttribute('y','0'); fo.setAttribute('width', String(rect.width)); fo.setAttribute('height', String(rect.height));
+
+      const wrapper = document.createElement('div');
+      wrapper.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
+      const style = document.createElement('style'); style.textContent = cssText;
+      wrapper.appendChild(style);
+      wrapper.appendChild(clone);
+      fo.appendChild(wrapper);
+      svg.appendChild(fo);
+
+      const svgBlob = new Blob([new XMLSerializer().serializeToString(svg)], {type: 'image/svg+xml;charset=utf-8'});
+      const url = URL.createObjectURL(svgBlob);
+
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.ceil(rect.width*scale);
+        canvas.height = Math.ceil(rect.height*scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob)=>{
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'beaux-sucres-tier.png';
+          a.click();
+          setTimeout(()=> URL.revokeObjectURL(a.href), 5000);
+          toast('PNG exporté');
+        });
+      };
+      img.onerror = ()=>{ URL.revokeObjectURL(url); alert('Export PNG non supporté par ce navigateur.'); };
+      img.src = url;
+    }catch(err){ alert('Export PNG : ' + (err?.message||err)); }
+  });
+
+  // Confetti minimal
+  const canvas = document.getElementById('fx');
+  const ctx = canvas.getContext('2d');
+  let confs = [];
+  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+  window.addEventListener('resize', resize); resize();
+  function confetti(){ const N=90; for(let i=0;i<N;i++){ confs.push({ x: Math.random()*canvas.width, y:-20, vy:2+Math.random()*3, vx:-2+Math.random()*4, s:4+Math.random()*4, r:Math.random()*Math.PI, vr:(-.2+Math.random()*.4) }); } }
+  function tick(){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.globalAlpha=.9; for(const c of confs){ c.x+=c.vx; c.y+=c.vy; c.r+=c.vr; c.vy+=0.03; ctx.save(); ctx.translate(c.x,c.y); ctx.rotate(c.r); ctx.fillRect(-c.s/2,-c.s/2,c.s,c.s); ctx.restore(); } confs = confs.filter(c=> c.y < canvas.height+40); requestAnimationFrame(tick); }
+  tick();
+
+  // Init
+  load();
+  render();
+  applyTheme(localStorage.getItem(themeKey)||'dark');
+
+  // Toast helper
+  let toastTimer=null; function toast(msg){ if(!toastEl) return; toastEl.textContent=msg; toastEl.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=> toastEl.classList.remove('show'), 1600); }
+})();
+
+
+===================== sw.js =====================
+const CACHE_NAME = 'beaux-sucres-v4';
+const ASSETS = [
+  './',
+  './index.html',
+  './styles.css',
+  './app.js',
+  './manifest.webmanifest'
+];
+self.addEventListener('install', e=>{
+  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)));
+});
+self.addEventListener('activate', e=>{
+  e.waitUntil(
+    caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k))))
+  );
+});
+self.addEventListener('fetch', e=>{
+  const req = e.request;
+  e.respondWith(
+    caches.match(req).then(res=> res || fetch(req).then(net=>{
+      if(req.method==='GET' && new URL(req.url).origin===location.origin){
+        const copy = net.clone(); caches.open(CACHE_NAME).then(c=>c.put(req, copy));
+      }
+      return net;
+    }).catch(()=> caches.match('./index.html')))
+  );
+});
+
+
+===================== manifest.webmanifest =====================
+{
+  "name": "Beaux Sucres — Tier List",
+  "short_name": "BeauxSucres",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0d0a",
+  "theme_color": "#16a34a",
+  "icons": [
+    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M10 16h38l-26 28h32v8H14l26-28H10z' fill='%2316a34a'/%3E%3C/svg%3E", "sizes": "64x64", "type": "image/svg+xml" }
+  ]
+}
